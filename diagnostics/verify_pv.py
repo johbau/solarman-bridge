@@ -2,10 +2,15 @@
 Live-Verifikation der PV-Berechnung gegen die Solarman-App.
 Liest V/I beider Strings, rechnet Leistung, vergleicht mit Energie-Zaehlern.
 """
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _config import WR_HOST, WR_SERIAL, WR_PORT, WR_SLAVE
+
 from pysolarmanv5 import PySolarmanV5
 import time
 
-m = PySolarmanV5("192.168.1.100", 1234567890, port=8899, mb_slave_id=1,
+m = PySolarmanV5(WR_HOST, WR_SERIAL, port=WR_PORT, mb_slave_id=WR_SLAVE,
                  socket_timeout=10, v5_error_correction=True)
 
 print(f"{'time':>8}  {'PV1(W)':>7}  {'PV2(W)':>7}  {'Total(W)':>8}  "

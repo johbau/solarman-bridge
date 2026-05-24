@@ -3,13 +3,13 @@ Breiter Scan-Modus: liest mehrere Bereiche und zeigt Roh + mögliche Interpretat
 Damit findest du das richtige Register, indem du die App-Werte mit den Zahlen vergleichst.
 """
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _config import WR_HOST as HOST, WR_SERIAL as SERIAL, WR_PORT as PORT, WR_SLAVE as SLAVE
+
 from pysolarmanv5 import PySolarmanV5
 import time
-
-HOST   = "192.168.1.100"
-SERIAL = 1234567890
-PORT   = 8899
-SLAVE  = 1
 
 # Interessante Bereiche bei Deye-Hybrid-Wechselrichtern (HP3 / LP3 / SG-Serien)
 RANGES = [

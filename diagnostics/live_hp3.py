@@ -3,13 +3,13 @@ Live-Monitor: pollt alle 3 Sekunden die relevanten Register und zeigt Veränderu
 Damit identifizierst du das Grid-Register, indem du eine starke Last einschaltest.
 """
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _config import WR_HOST as HOST, WR_SERIAL as SERIAL, WR_PORT as PORT, WR_SLAVE as SLAVE
+
 from pysolarmanv5 import PySolarmanV5
 import time
-
-HOST   = "192.168.1.100"
-SERIAL = 1234567890
-PORT   = 8899
-SLAVE  = 1
 
 # Verdächtige Kandidaten für Grid-Leistung + bekannte Referenzen
 REGS = {

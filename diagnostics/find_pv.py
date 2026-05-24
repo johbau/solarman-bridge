@@ -8,13 +8,13 @@ Vorgehen:
 4. Zahlen finden, die zur App-Anzeige passen (x1, x10 oder x100)
 """
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _config import WR_HOST as HOST, WR_SERIAL as SERIAL, WR_PORT as PORT, WR_SLAVE as SLAVE
+
 from pysolarmanv5 import PySolarmanV5
 import time
-
-HOST   = "192.168.1.100"
-SERIAL = 1234567890
-PORT   = 8899
-SLAVE  = 1
 
 
 def s16(v):

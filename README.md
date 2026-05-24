@@ -108,6 +108,20 @@ solarman-bridge/
 
 ## Configuration
 
+### Diagnostic scripts (laptop)
+
+Copy `.env.example` to `.env` and fill in your inverter details:
+
+```bash
+cp .env.example .env
+# edit .env: WR_HOST, WR_SERIAL, WR_PORT, WR_SLAVE
+```
+
+All scripts in `diagnostics/` automatically pick up these values via the
+shared `_config.py` loader. The `.env` file is gitignored.
+
+### Bridge (Pi)
+
 Set the inverter IP and logger serial number at the top of
 [`pi/solarman_bridge.py`](pi/solarman_bridge.py):
 

@@ -3,12 +3,12 @@ Diagnose-Skript für Deye SUN-25K-SG01HP3-EU-AM2
 Liest die typischen HP3-Hybrid-Register und zeigt sie lesbar an.
 """
 
-from pysolarmanv5 import PySolarmanV5
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _config import WR_HOST as HOST, WR_SERIAL as SERIAL, WR_PORT as PORT, WR_SLAVE as SLAVE
 
-HOST   = "192.168.1.100"
-SERIAL = 1234567890
-PORT   = 8899
-SLAVE  = 1
+from pysolarmanv5 import PySolarmanV5
 
 # (label, register, count, scale, unit, signed)
 REGS = [
