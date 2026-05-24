@@ -1,0 +1,24 @@
+[Unit]
+Description=Solarman to HTTP bridge for Deye inverter
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=evcc
+Group=evcc
+WorkingDirectory=/opt/solarman-bridge
+ExecStart=/opt/solarman-bridge/.venv/bin/python /opt/solarman-bridge/solarman_bridge.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

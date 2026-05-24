@@ -1,0 +1,89 @@
+# evcc-Konfiguration fuer Deye SUN-25K-SG01HP3-EU-AM2
+# Logger-Stick: 192.168.1.100  Seriennummer: 1234567890
+#
+# Register-Mapping (verifiziert per pysolarmanv5):
+#   625  Grid total      x1 W   signed   (+ Bezug / - Einspeisung)
+#   590  Battery power   x10 W  signed   (+ Entladen / - Laden)
+#   588  Battery SOC     x1 %
+#   653  Load total      x1 W   unsigned
+#   636  Inverter total  x1 W   signed
+#
+# PV-Register sind nachts alle 0 und muessen tagsueber noch identifiziert werden.
+
+network:
+  schema: http
+  host: 0.0.0.0
+  port: 7070
+
+interval: 10s
+
+meters:
+  # ---------------- Netz ----------------
+  - name: grid
+    type: custom
+    power:
+      source: modbus
+      uri: 192.168.1.100:8899
+      protocol: tcp
+      id: 1
+      solarman:
+        serial: 1234567890
+      register:
+        address: 625
+        type: holding
+        decode: int16
+
+  # ---------------- Batterie ----------------
+  - name: battery
+    type: custom
+    power:
+      source: modbus
+      uri: 192.168.1.100:8899
+      protocol: tcp
+      id: 1
+      solarman:
+        serial: 1234567890
+      register:
+        address: 590
+        type: holding
+        decode: int16
+      scale: 10
+    soc:
+      source: modbus
+      uri: 192.168.1.100:8899
+      protocol: tcp
+      id: 1
+      solarman:
+        serial: 1234567890
+      register:
+        address: 588
+        type: holding
+        decode: uint16
+
+  # ---------------- PV (TODO: tagsueber Register identifizieren) ----------------
+  # - name: pv
+  #   type: custom
+  #   power:
+  #     source: modbus
+  #     uri: 192.168.1.100:8899
+  #     protocol: tcp
+  #     id: 1
+  #     solarman:
+  #       serial: 1234567890
+  #     register:
+  #       address: ???        # zu ermitteln
+  #       type: holding
+  #       decode: uint16
+  #     scale: 1               # ggf. 10 (x0.1 kW -> W)
+
+site:
+  title: Zuhause
+  meters:
+    grid: grid
+    battery: battery
+    # pv: pv          # einkommentieren sobald identifiziert
+
+# loadpoints:
+#   - title: Wallbox
+#     charger: wallbox
+#     mode: pv

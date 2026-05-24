@@ -1,0 +1,9 @@
+.venv/
+SESSION.md
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+*.swp
+.idea/
+.vscode/

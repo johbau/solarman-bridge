@@ -1,0 +1,5 @@
+power:
+  source: http
+  uri: http://localhost:7071/grid
+  method: GET
+  timeout: 5s

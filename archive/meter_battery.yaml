@@ -1,0 +1,23 @@
+power:
+  source: modbus
+  uri: 192.168.1.100:8899
+  protocol: tcp
+  id: 1
+  solarman:
+    serial: 1234567890
+  register:
+    address: 590
+    type: holding
+    decode: int16
+  scale: 10
+soc:
+  source: modbus
+  uri: 192.168.1.100:8899
+  protocol: tcp
+  id: 1
+  solarman:
+    serial: 1234567890
+  register:
+    address: 588
+    type: holding
+    decode: uint16

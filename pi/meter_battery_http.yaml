@@ -1,0 +1,20 @@
+power:
+  source: http
+  uri: http://localhost:7071/bat_power
+  method: GET
+  timeout: 5s
+soc:
+  source: http
+  uri: http://localhost:7071/bat_soc
+  method: GET
+  timeout: 5s
+# Batterie-Mode-Steuerung fuer Tibber-getriebenes Netz-Laden
+# evcc sendet: 1=normal, 2=hold, 3=charge
+batterymode:
+  source: http
+  uri: http://localhost:7071/battery_mode
+  method: POST
+  body: "{{.mode}}"
+  headers:
+    - content-type: text/plain
+  timeout: 10s

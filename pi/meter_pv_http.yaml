@@ -1,0 +1,10 @@
+power:
+  source: http
+  uri: http://localhost:7071/pv
+  method: GET
+  timeout: 5s
+energy:
+  source: http
+  uri: http://localhost:7071/pv_total
+  method: GET
+  timeout: 5s
