@@ -1,6 +1,7 @@
 .venv/
 SESSION.md
 .env
+pi/.env
 __pycache__/
 *.pyc
 *.pyo

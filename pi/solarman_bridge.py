@@ -27,6 +27,8 @@ laeuft, gehen diese Aenderungen beim Wechsel zurueck zu NORMAL verloren.
 
 import json
 import logging
+import os
+import sys
 import threading
 import time
 from datetime import datetime
@@ -35,10 +37,21 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pysolarmanv5 import PySolarmanV5
 
 # ---------- Konfiguration ----------
-WR_HOST    = "192.168.1.100"
-WR_SERIAL  = 1234567890
-WR_PORT    = 8899
-WR_SLAVE   = 1
+# Lade WR_HOST / WR_SERIAL / WR_PORT / WR_SLAVE aus .env im selben Verzeichnis.
+# Falls keine .env existiert, nutze Prozess-Environment, dann Defaults.
+_cfg_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+if os.path.isfile(_cfg_file):
+    with open(_cfg_file) as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, v = line.split("=", 1)
+                os.environ.setdefault(k, v.strip().strip('"').strip("'"))
+
+WR_HOST    = os.environ.get("WR_HOST",   "192.168.1.100")
+WR_SERIAL  = int(os.environ.get("WR_SERIAL", "1234567890"))
+WR_PORT    = int(os.environ.get("WR_PORT",   "8899"))
+WR_SLAVE   = int(os.environ.get("WR_SLAVE",  "1"))
 
 HTTP_PORT     = 7071
 POLL_INTERVAL = 5.0

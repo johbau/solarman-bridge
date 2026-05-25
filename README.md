@@ -122,13 +122,29 @@ shared `_config.py` loader. The `.env` file is gitignored.
 
 ### Bridge (Pi)
 
-Set the inverter IP and logger serial number at the top of
-[`pi/solarman_bridge.py`](pi/solarman_bridge.py):
+Copy [`pi/.env.example`](pi/.env.example) to `pi/.env` on the Pi
+(`/opt/solarman-bridge/.env`):
 
-```python
-WR_HOST    = "192.168.x.x"
-WR_SERIAL  = 1234567890     # 10-digit number from the WiFi dongle label
+```bash
+scp pi/.env.example admin@evcc.local:/tmp/solarman/
+ssh admin@evcc.local
+sudo mv /tmp/solarman/.env.example /opt/solarman-bridge/.env
+sudo nano /opt/solarman-bridge/.env   # fill in real values
+sudo systemctl restart solarman-bridge
 ```
+
+Alternatively, edit `.env.example` before copying, or create the file
+manually on the Pi with the correct values. The bridge reads `.env` at
+startup; use placeholder values in `pi/.env.example` (gitignored).
+
+Both environments share the same four variables:
+
+| Variable | Description | Default |
+|---|---|---|
+| `WR_HOST` | IP or hostname of the Deye WiFi dongle | `192.168.1.100` |
+| `WR_SERIAL` | 10-digit serial on the WiFi dongle label | `1234567890` |
+| `WR_PORT` | Solarman v5 protocol port | `8899` |
+| `WR_SLAVE` | Modbus slave ID | `1` |
 
 ## License
 
