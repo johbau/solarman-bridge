@@ -44,5 +44,5 @@ WR_SLAVE  = int(os.environ.get("WR_SLAVE",  "1"))
 if WR_SERIAL == 1234567890:
     import sys as _sys
     print("WARNING: WR_SERIAL is the placeholder value. "
-          "Copy pi/.env.example to pi/.env and fill in real values.",
+          "Copy .env.example (repo root) to pi/.env and fill in real values.",
           file=_sys.stderr)

@@ -130,20 +130,19 @@ shared `_config.py` loader. The `.env` file is gitignored.
 
 ### Bridge (Pi)
 
-Copy [`pi/.env.example`](pi/.env.example) to `pi/.env` on the Pi
-(`/opt/solarman-bridge/.env`):
+Copy the same [`.env.example`](.env.example) to the Pi as
+`/opt/solarman-bridge/.env`:
 
 ```bash
-scp pi/.env.example admin@evcc.local:/tmp/solarman/
+scp .env.example admin@evcc.local:/tmp/solarman/
 ssh admin@evcc.local
 sudo mv /tmp/solarman/.env.example /opt/solarman-bridge/.env
 sudo nano /opt/solarman-bridge/.env   # fill in real values
 sudo systemctl restart solarman-bridge
 ```
 
-Alternatively, edit `.env.example` before copying, or create the file
-manually on the Pi with the correct values. The bridge reads `.env` at
-startup; use placeholder values in `pi/.env.example` (gitignored).
+Alternatively, create the file manually on the Pi with the correct
+values. The bridge reads `.env` (next to the script) at startup.
 
 Both environments share the same four variables:
 
