@@ -72,6 +72,11 @@ via read-back.
 See **[SETUP.md](SETUP.md)** — installation and maintenance guide for the
 Pi (systemd service, evcc UI meters, test scripts).
 
+## Optional: SOC-controlled grid switch
+
+**[SOC_SWITCH.md](SOC_SWITCH.md)** — seasonal connect/disconnect of the
+inverter's mains line via a FRITZ!DECT plug, driven by battery SOC.
+
 ## How it was built
 
 **[SESSION.md](SESSION.md)** documents the full reverse-engineering
@@ -86,10 +91,13 @@ solarman-bridge/
   README.md                 - this document
   SETUP.md                  - installation and maintenance guide
   SESSION.md                - session log / reverse engineering notes
+  SOC_SWITCH.md             - SOC-controlled FRITZ!DECT grid switch
 
   pi/                       - files deployed to the Pi
     solarman_bridge.py      - HTTP bridge (read + write)
     solarman-bridge.service - systemd unit
+    soc_switch.py           - SOC-controlled FRITZ!DECT switch daemon
+    soc-switch.service      - systemd unit for soc_switch.py
     meter_*.yaml            - evcc custom-meter configs
     test_battery_mode.sh    - manual test of the write endpoint
 
