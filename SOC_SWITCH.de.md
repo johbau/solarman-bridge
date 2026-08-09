@@ -20,11 +20,15 @@ Standard April–September) oder mit `SEASON=summer|winter` fest vorgegeben.
 
 | Saison | Steckdose EIN (verbinden)   | Steckdose AUS (trennen)     |
 |--------|-----------------------------|-----------------------------|
-| Sommer | SOC ≥ `SUMMER_ON` (95 %)    | SOC ≤ `SUMMER_OFF` (85 %)   |
+| Sommer | SOC ≥ `SUMMER_ON` (95 %) **und** PV ≥ `PV_ON` (200 W) | SOC ≤ `SUMMER_OFF` (85 %) **oder** PV ≤ `PV_OFF` (50 W) |
 | Winter | SOC ≤ `WINTER_ON` (15 %)    | SOC ≥ `WINTER_OFF` (25 %)   |
 
 Zwischen den beiden Schwellen wird der Zustand **gehalten** (Hysterese) —
-die Steckdose flattert also nicht um eine einzelne Schwelle herum.
+die Steckdose flattert also nicht um eine einzelne Schwelle herum. Im
+Sommer hat auch die PV-Bedingung (vom Bridge-Endpunkt `/pv`) ein eigenes
+Hysterese-Band — kein Flattern durch Wolken in der Daemmerung. Ohne
+PV-Leistung gibt es nichts zu verkaufen, daher schaltet die Steckdose
+nachts unabhaengig vom SOC aus.
 
 Fail-safe-Verhalten:
 

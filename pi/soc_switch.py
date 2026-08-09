@@ -4,15 +4,17 @@ SOC-gesteuerter AVM-Schalter (FRITZ!DECT) fuer den Deye-Wechselrichter.
 Liest den Batterie-SOC vom solarman_bridge (/bat_soc) und schaltet eine
 FRITZ!DECT-Steckdose ueber das FRITZ!Box AHA-HTTP-Interface — saisonal:
 
-  Sommer (SUMMER_MONTHS): EIN bei SOC >= SUMMER_ON  (Ueberschuss verkaufen),
-                          AUS bei SOC <= SUMMER_OFF
+  Sommer (SUMMER_MONTHS): EIN bei SOC >= SUMMER_ON und PV >= PV_ON
+                          (Ueberschuss verkaufen),
+                          AUS bei SOC <= SUMMER_OFF oder PV <= PV_OFF
   Winter (sonst):         EIN bei SOC <= WINTER_ON  (Strom zukaufen),
                           AUS bei SOC >= WINTER_OFF
   dazwischen: Zustand halten (Hysterese)
 
 Konfiguration via .env im selben Verzeichnis (siehe .env.example):
   FRITZ_HOST, FRITZ_USER, FRITZ_PASS, FRITZ_AIN,
-  SUMMER_MONTHS, SUMMER_ON/OFF, WINTER_ON/OFF, SEASON (auto|summer|winter)
+  SUMMER_MONTHS, SUMMER_ON/OFF, WINTER_ON/OFF, PV_ON/OFF,
+  SEASON (auto|summer|winter)
 
 Fail-safe: Wenn der SOC nicht lesbar ist (Bridge down/stale), wird NICHT
 geschaltet — der letzte Zustand bleibt erhalten.
@@ -54,6 +56,11 @@ SUMMER_ON  = float(os.environ.get("SUMMER_ON",  "95"))
 SUMMER_OFF = float(os.environ.get("SUMMER_OFF", "85"))
 WINTER_ON  = float(os.environ.get("WINTER_ON",  "15"))
 WINTER_OFF = float(os.environ.get("WINTER_OFF", "25"))
+
+# Sommer zusaetzlich: EIN nur bei PV-Leistung >= PV_ON (W),
+# AUS sobald PV <= PV_OFF (W). Hysterese gegen Wolken-Flattern.
+PV_ON  = float(os.environ.get("PV_ON",  "200"))
+PV_OFF = float(os.environ.get("PV_OFF", "50"))
 
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s %(levelname)s %(message)s")
@@ -111,10 +118,12 @@ def season(month: int) -> str:
     return "summer" if month in SUMMER_MONTHS else "winter"
 
 
-def decide(soc: float, mode: str):
+def decide(soc: float, mode: str, pv: float = 0.0):
     """True=ein, False=aus, None=Zustand halten (Hysterese)."""
-    if mode == "summer":          # voll -> verkaufen
-        if soc >= SUMMER_ON:
+    if mode == "summer":          # voll + PV vorhanden -> verkaufen
+        if pv <= PV_OFF:
+            return False          # keine PV -> nichts zu verkaufen
+        if soc >= SUMMER_ON and pv >= PV_ON:
             return True
         if soc <= SUMMER_OFF:
             return False
@@ -126,8 +135,8 @@ def decide(soc: float, mode: str):
     return None
 
 
-def read_soc() -> float:
-    return float(_http_get(f"{BRIDGE_URL}/bat_soc", timeout=5))
+def read_value(path: str) -> float:
+    return float(_http_get(f"{BRIDGE_URL}/{path}", timeout=5))
 
 
 # ---------- Hauptschleife ----------
@@ -135,29 +144,32 @@ def main():
     if not (FRITZ_USER and FRITZ_PASS and FRITZ_AIN):
         log.error("FRITZ_USER/FRITZ_PASS/FRITZ_AIN fehlen in .env")
         sys.exit(1)
-    if SUMMER_OFF >= SUMMER_ON or WINTER_ON >= WINTER_OFF:
-        log.error("Hysterese kaputt: SUMMER_OFF < SUMMER_ON und "
-                  "WINTER_ON < WINTER_OFF noetig")
+    if (SUMMER_OFF >= SUMMER_ON or WINTER_ON >= WINTER_OFF
+            or PV_OFF >= PV_ON):
+        log.error("Hysterese kaputt: SUMMER_OFF < SUMMER_ON, "
+                  "WINTER_ON < WINTER_OFF und PV_OFF < PV_ON noetig")
         sys.exit(1)
 
     sid = None
-    log.info("Start: Sommer EIN>=%s%%/AUS<=%s%%, Winter EIN<=%s%%/AUS>=%s%%, "
-             "Saison=%s, Poll %ss",
-             SUMMER_ON, SUMMER_OFF, WINTER_ON, WINTER_OFF, SEASON, POLL)
+    log.info("Start: Sommer EIN>=%s%% & PV>=%sW / AUS<=%s%% oder PV<=%sW, "
+             "Winter EIN<=%s%%/AUS>=%s%%, Saison=%s, Poll %ss",
+             SUMMER_ON, PV_ON, SUMMER_OFF, PV_OFF,
+             WINTER_ON, WINTER_OFF, SEASON, POLL)
     last_mode = None
     while True:
+        mode = season(time.localtime().tm_mon)
         try:
-            soc = read_soc()
+            soc = read_value("bat_soc")
+            pv = read_value("pv") if mode == "summer" else 0.0
         except Exception as e:
-            log.warning("SOC nicht lesbar (%s) — halte Zustand", e)
+            log.warning("SOC/PV nicht lesbar (%s) — halte Zustand", e)
             time.sleep(POLL)
             continue
 
-        mode = season(time.localtime().tm_mon)
         if mode != last_mode:
             log.info("Saison-Modus: %s", mode)
             last_mode = mode
-        want = decide(soc, mode)
+        want = decide(soc, mode, pv)
         if want is not None:
             try:
                 if sid is None:
@@ -168,8 +180,8 @@ def main():
                 is_on = state == "1"
                 if want != is_on:
                     fritz_cmd(sid, "setswitchon" if want else "setswitchoff")
-                    log.info("SOC %.1f%% -> Steckdose %s",
-                             soc, "EIN" if want else "AUS")
+                    log.info("SOC %.1f%%, PV %.0fW -> Steckdose %s",
+                             soc, pv, "EIN" if want else "AUS")
             except Exception as e:
                 log.warning("FRITZ-Fehler (%s) — neuer Login beim naechsten Poll", e)
                 sid = None
@@ -177,12 +189,17 @@ def main():
 
 
 def selftest():
-    # Sommer: voll -> verkaufen (Defaults 95/85)
-    assert decide(96, "summer") is True
-    assert decide(95, "summer") is True
-    assert decide(90, "summer") is None   # Hysterese: halten
-    assert decide(85, "summer") is False
-    assert decide(20, "summer") is False
+    # Sommer: voll + PV -> verkaufen (Defaults 95/85, PV 200/50)
+    assert decide(96, "summer", pv=500) is True
+    assert decide(95, "summer", pv=200) is True
+    assert decide(90, "summer", pv=500) is None   # Hysterese: halten
+    assert decide(85, "summer", pv=500) is False
+    assert decide(20, "summer", pv=500) is False
+    # Sommer: PV-Bedingung
+    assert decide(96, "summer", pv=0) is False    # keine PV -> AUS
+    assert decide(96, "summer", pv=50) is False   # PV <= PV_OFF -> AUS
+    assert decide(96, "summer", pv=100) is None   # PV-Hysterese: halten
+    assert decide(90, "summer", pv=100) is None   # halten
     # Winter: leer -> zukaufen (Defaults 15/25)
     assert decide(10, "winter") is True
     assert decide(15, "winter") is True

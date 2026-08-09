@@ -20,11 +20,15 @@ or forced with `SEASON=summer|winter`.
 
 | Season | Plug ON (connect)     | Plug OFF (disconnect)  |
 |--------|-----------------------|------------------------|
-| Summer | SOC ≥ `SUMMER_ON` (95 %) | SOC ≤ `SUMMER_OFF` (85 %) |
+| Summer | SOC ≥ `SUMMER_ON` (95 %) **and** PV ≥ `PV_ON` (200 W) | SOC ≤ `SUMMER_OFF` (85 %) **or** PV ≤ `PV_OFF` (50 W) |
 | Winter | SOC ≤ `WINTER_ON` (15 %) | SOC ≥ `WINTER_OFF` (25 %) |
 
 Between the two thresholds the state is **held** (hysteresis), so the plug
-never chatters around a single threshold.
+never chatters around a single threshold. In summer the PV condition (from
+the bridge's `/pv` endpoint) has its own hysteresis band for the same
+reason — no chatter from passing clouds at dawn/dusk. Without PV power
+there is nothing to sell, so the plug switches off at night regardless
+of SOC.
 
 Fail-safe behavior:
 
