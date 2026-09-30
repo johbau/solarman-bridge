@@ -232,6 +232,7 @@ soc:
   uri: http://localhost:7071/bat_soc
   method: GET
   timeout: 5s
+capacity: 42  # kWh (~210 V x 200 Ah)
 # Required since evcc 0.3xx; without it evcc fails at startup with
 # "battery mode: no supported modes, add batteryModes".
 # hold is deliberately not declared (see HOLD limitation above).

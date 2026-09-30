@@ -8,6 +8,7 @@ soc:
   uri: http://localhost:7071/bat_soc
   method: GET
   timeout: 5s
+capacity: 42  # kWh (~210 V x 200 Ah)
 # Batterie-Mode-Steuerung fuer Tibber-getriebenes Netz-Laden
 # evcc sendet: 1=normal, 2=hold, 3=charge
 # evcc >= 0.3xx verlangt die unterstuetzten Modi explizit (sonst Fatal:
