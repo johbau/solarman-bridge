@@ -10,6 +10,11 @@ soc:
   timeout: 5s
 # Batterie-Mode-Steuerung fuer Tibber-getriebenes Netz-Laden
 # evcc sendet: 1=normal, 2=hold, 3=charge
+# evcc >= 0.3xx verlangt die unterstuetzten Modi explizit (sonst Fatal:
+# "battery mode: no supported modes, add batteryModes").
+# hold absichtlich nicht deklariert: auf dem HP3 haelt es die Batterie
+# nicht wirklich (siehe SETUP.md).
+batteryModes: [normal, charge]
 batterymode:
   source: http
   uri: http://localhost:7071/battery_mode

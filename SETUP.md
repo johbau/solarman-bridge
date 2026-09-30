@@ -232,6 +232,18 @@ soc:
   uri: http://localhost:7071/bat_soc
   method: GET
   timeout: 5s
+# Required since evcc 0.3xx; without it evcc fails at startup with
+# "battery mode: no supported modes, add batteryModes".
+# hold is deliberately not declared (see HOLD limitation above).
+batteryModes: [normal, charge]
+batterymode:
+  source: http
+  uri: http://localhost:7071/battery_mode
+  method: POST
+  body: "{{.mode}}"
+  headers:
+    - content-type: text/plain
+  timeout: 10s
 ```
 
 ### Meter "pv" (type: PV system → custom)
@@ -291,6 +303,13 @@ The bridge cannot reach the inverter. Check logs:
 sudo journalctl -u solarman-bridge -n 50 --no-pager
 ```
 Common causes: dongle temporarily offline (power cycle) or WiFi dropout.
+
+### After an evcc update: grid/pv/battery all empty, bridge `/all` fine
+
+Check `curl http://evcc.local:7070/api/state | grep fatal`. If it says
+`battery mode: no supported modes, add batteryModes`, the battery meter
+needs the `batteryModes` line from the config above (evcc UI → Devices →
+battery meter → edit → save, then restart evcc).
 
 ### evcc shows 0 / wrong values
 
