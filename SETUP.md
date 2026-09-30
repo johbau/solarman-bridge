@@ -241,7 +241,7 @@ batterymode:
   source: http
   uri: http://localhost:7071/battery_mode
   method: POST
-  body: "{{.mode}}"
+  body: "{{.batteryMode}}"  # template variable is named batteryMode, not mode
   headers:
     - content-type: text/plain
   timeout: 10s
