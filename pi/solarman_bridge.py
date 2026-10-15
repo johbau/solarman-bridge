@@ -203,6 +203,21 @@ state = State()
 # ============================================================
 # Battery-Mode-Controller (TOU-Slot Manipulation)
 # ============================================================
+def active_slot(times, now_hhmm):
+    """Deye-Semantik: Slot i laeuft von times[i] bis times[i+1] (Wrap nach
+    Slot 6). Leere Slots (Start == Ende) werden uebersprungen, z.B. bei
+    nur zwei genutzten Slots [0, 1200, 0, 0, 0, 0]."""
+    n = len(times)
+    for i in range(n):
+        start, end = times[i], times[(i + 1) % n]
+        if start == end:
+            continue
+        if (start <= now_hhmm < end) or (start > end and
+                                         (now_hhmm >= start or now_hhmm < end)):
+            return i
+    return n - 1  # alle Slots leer (alle Zeiten gleich): letzter Slot
+
+
 class Controller:
     """Verwaltet den aktiven Battery-Mode durch TOU-Slot-Manipulation."""
 
@@ -247,14 +262,7 @@ class Controller:
             raise RuntimeError("baseline not loaded")
         now = datetime.now()
         now_hhmm = now.hour * 100 + now.minute
-        times = self.baseline["times"]
-        # Slot, dessen Startzeit am groessten und <= now ist (mit Wrap)
-        sorted_idx = sorted(range(TOU_SLOTS), key=lambda i: times[i])
-        current = sorted_idx[-1]  # Fallback: spaetester Slot (wrap)
-        for i in sorted_idx:
-            if times[i] <= now_hhmm:
-                current = i
-        return current
+        return active_slot(self.baseline["times"], now_hhmm)
 
     # ---- Mode setzen ----
     def set_mode(self, new_mode):
