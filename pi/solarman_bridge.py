@@ -28,7 +28,9 @@ laeuft, gehen diese Aenderungen beim Wechsel zurueck zu NORMAL verloren.
 import json
 import logging
 import os
+import signal
 import sys
+import urllib.request
 import threading
 import time
 from datetime import datetime
@@ -52,6 +54,8 @@ WR_HOST    = os.environ.get("WR_HOST",   "192.168.1.100")
 WR_SERIAL  = int(os.environ.get("WR_SERIAL", "1234567890"))
 WR_PORT    = int(os.environ.get("WR_PORT",   "8899"))
 WR_SLAVE   = int(os.environ.get("WR_SLAVE",  "1"))
+# evcc-API: nach Neustart den von evcc erwarteten Battery-Mode uebernehmen
+EVCC_URL   = os.environ.get("EVCC_URL", "http://127.0.0.1:7070")
 
 HTTP_PORT     = 7071
 POLL_INTERVAL = 5.0
@@ -456,6 +460,20 @@ class Handler(BaseHTTPRequestHandler):
 # ============================================================
 # Main
 # ============================================================
+def sync_mode_from_evcc():
+    """evcc merkt sich den zuletzt gesetzten Mode und sendet ihn nach einem
+    Bridge-Neustart nicht erneut. Daher beim Start den Mode aus evcc holen."""
+    try:
+        with urllib.request.urlopen(f"{EVCC_URL}/api/state", timeout=5) as r:
+            d = json.load(r)
+        mode = d.get("result", d).get("batteryMode")
+        if mode in ("hold", "charge"):
+            log.info("evcc expects mode %s - applying after restart", mode)
+            controller.set_mode(mode)
+    except Exception as e:
+        log.warning("evcc mode sync skipped: %s", e)
+
+
 def main():
     t = threading.Thread(target=poller, daemon=True)
     t.start()
@@ -465,6 +483,7 @@ def main():
         for attempt in range(10):
             try:
                 controller.load_baseline()
+                sync_mode_from_evcc()
                 return
             except Exception as e:
                 log.warning("baseline load attempt %d failed: %s",
@@ -473,6 +492,11 @@ def main():
         log.error("could not load TOU baseline - write endpoints disabled")
 
     threading.Thread(target=init_controller, daemon=True).start()
+
+    # systemd stoppt mit SIGTERM -> gleicher Restore-Pfad wie Ctrl-C
+    def _sigterm(*_):
+        raise KeyboardInterrupt
+    signal.signal(signal.SIGTERM, _sigterm)
 
     server = ThreadingHTTPServer(("0.0.0.0", HTTP_PORT), Handler)
     log.info("HTTP server listening on :%d", HTTP_PORT)
