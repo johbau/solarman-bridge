@@ -332,6 +332,25 @@ class Controller:
             return "charge"
         raise ValueError(f"unknown mode: {mode!r}")
 
+    def follow_slot(self):
+        """Bei Slot-Wechsel waehrend HOLD/CHARGE den Mode in den neuen Slot
+        uebertragen, sonst gilt dort wieder die Baseline (z.B. SOC 15 ->
+        Laden stoppt, obwohl evcc weiter 'charge' erwartet)."""
+        with self.lock:
+            if self.mode == "normal" or self.modified_slot is None:
+                return
+            slot = self.current_slot()
+            if slot == self.modified_slot:
+                return
+            log.info("slot change %d -> %d while %s: re-applying",
+                     self.modified_slot + 1, slot + 1, self.mode)
+            self._restore_slot(self.modified_slot)
+            if self.mode == "hold":
+                self._apply_hold(slot)
+            else:
+                self._apply_charge(slot)
+            self.modified_slot = slot
+
     def info(self):
         with self.lock:
             return {
@@ -363,6 +382,10 @@ def poller():
                       state.values["bat_soc"], state.values["load"],
                       state.values["pv"])
             backoff = 2
+            try:
+                controller.follow_slot()
+            except Exception as e:
+                log.warning("follow_slot failed: %s", e)
             time.sleep(POLL_INTERVAL)
         except Exception as e:
             log.warning("poll error: %s: %s", type(e).__name__, e)
